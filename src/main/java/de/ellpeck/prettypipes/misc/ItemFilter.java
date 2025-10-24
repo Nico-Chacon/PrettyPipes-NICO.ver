@@ -34,10 +34,18 @@ public class ItemFilter {
     public boolean canPopulateFromInventories;
     public boolean canModifyWhitelist = true;
 
+    public FilterMode mode; // ✅ Necesario para que canExtract funcione
+
+    public boolean canExtract() {
+        return this.mode == FilterMode.ALLOW || this.mode == FilterMode.PASSIVE;
+    }
+
     private final ItemStack stack;
     private final PipeBlockEntity pipe;
 
     private boolean modified;
+}
+
 
     public ItemFilter(int size, ItemStack stack, PipeBlockEntity pipe) {
         this.content = new ItemStackHandler(size) {

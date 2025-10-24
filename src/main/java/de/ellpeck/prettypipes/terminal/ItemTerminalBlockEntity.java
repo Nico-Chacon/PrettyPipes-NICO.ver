@@ -49,6 +49,37 @@ public class ItemTerminalBlockEntity extends BlockEntity implements IPipeConnect
         }
     };
     protected Map<EquatableItemStack, NetworkItem> networkItems;
+    protected Map<EquatableItemStack, NetworkItem> collectItems(ItemEquality... equalityTypes) {
+    Map<EquatableItemStack, NetworkItem> collected = new HashMap<>();
+    var pipe = this.getConnectedPipe();
+    if (pipe == null)
+        return collected;
+
+    var network = PipeNetwork.get(this.level);
+    for (var location : network.getItemLocations(pipe.getBlockPos())) {
+        var inv = location.getItemHandler(this.level);
+        if (inv == null)
+            continue;
+
+        var filterPipe = network.getPipe(location.getPos());
+        if (filterPipe != null && filterPipe.hasModule(de.ellpeck.prettypipes.pipe.modules.FilterModule.TYPE)) {
+            var module = filterPipe.getModule(de.ellpeck.prettypipes.pipe.modules.FilterModule.TYPE);
+            if (module != null && !module.canExtract()) // o el método que controle lectura
+                continue;
+        }
+
+        for (int i = 0; i < inv.getSlots(); i++) {
+            var stack = inv.getStackInSlot(i);
+            if (!stack.isEmpty()) {
+                var key = new EquatableItemStack(stack, equalityTypes);
+                collected.computeIfAbsent(key, k -> new NetworkItem()).addLocation(location);
+            }
+        }
+    }
+
+    return collected;
+}
+
     private final Queue<NetworkLock> existingRequests = new LinkedList<>();
 
     public ItemTerminalBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
